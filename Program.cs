@@ -1,23 +1,18 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Windows.System;
-
 using Windows.Devices.Bluetooth.Advertisement;
 
 namespace ConsoleApplication1
 {
-    class Program
+    internal class Program
     {
-        static void Main(string[] args)
+        private static void Main(string[] args)
         {
             // Start the program
             var program = new Program();
 
             // Close on key press
-            Console.ReadLine();
+            Console.WriteLine("Scanning ... Press any key to cancel (finish).");
+            Console.ReadKey();
         }
 
         public Program()
@@ -33,12 +28,15 @@ namespace ConsoleApplication1
             // Stop watching if the value drops below -90 (user walked away)
             watcher.SignalStrengthFilter.OutOfRangeThresholdInDBm = -90;
 
-            // Register callback for when we see an advertisements
-            watcher.Received += OnAdvertisementReceived;
-
             // Wait 5 seconds to make sure the device is really out of range
             watcher.SignalStrengthFilter.OutOfRangeTimeout = TimeSpan.FromMilliseconds(5000);
             watcher.SignalStrengthFilter.SamplingInterval = TimeSpan.FromMilliseconds(2000);
+
+            // Register callback for when we see an advertisements
+            watcher.Received += OnAdvertisementReceived;
+
+            // Register callback for scan stop or error, especially
+            watcher.Stopped += OnStopped;
 
             // Starting watching for advertisements
             watcher.Start();
@@ -51,6 +49,13 @@ namespace ConsoleApplication1
             Console.WriteLine(String.Format("  BT_ADDR: {0}", eventArgs.BluetoothAddress));
             Console.WriteLine(String.Format("  FR_NAME: {0}", eventArgs.Advertisement.LocalName));
             Console.WriteLine();
+        }
+
+        private void OnStopped(BluetoothLEAdvertisementWatcher sender, BluetoothLEAdvertisementWatcherStoppedEventArgs args)
+        {
+            // Tell the user when the advertisement finishes
+            Console.WriteLine(String.Format("Advertisement stopped with: {0}", args.Error));
+            Console.WriteLine("Press any key to finish.");
         }
     }
 }
